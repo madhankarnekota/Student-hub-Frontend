@@ -1,34 +1,43 @@
-
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { useNavigate, Link } from 'react-router-dom';
 
 function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [formData, setFormData] = useState({ email: '', password: '' });
   const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
+  const handleChange = e => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async e => {
     e.preventDefault();
-    try {
-      await axios.post('http://localhost:4000/api/login', { email, password });
-      navigate('/dashboard');
-    } catch (err) {
-      setError(err.response?.data?.message || 'Login failed');
+
+    const { email, password } = formData;
+
+    if (email === 'admin@gmail.com' && password === 'admin') {
+      navigate('/admin');
+    } else {
+      try {
+        const res = await axios.post('http://localhost:4000/login', formData);
+        if (res.status === 200) {
+          localStorage.setItem('student', JSON.stringify(res.data.student));
+          navigate('/dashboard');
+        }
+      } catch (err) {
+        alert(err.response?.data?.message || 'Login failed');
+      }
     }
   };
 
   return (
-    <div className="p-6 max-w-sm mx-auto">
-      <h2 className="text-xl font-bold mb-4">Login</h2>
-      {error && <p className="text-red-500">{error}</p>}
-      <form onSubmit={handleLogin} className="flex flex-col gap-3">
-        <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required className="border p-2" />
-        <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required className="border p-2" />
-        <button type="submit" className="bg-blue-500 text-white p-2 rounded">Login</button>
+    <div>
+      <h2>Login</h2>
+      <form onSubmit={handleSubmit}>
+        <input name="email" type="email" placeholder="Email" onChange={handleChange} required />
+        <input name="password" type="password" placeholder="Password" onChange={handleChange} required />
+        <button type="submit">Login</button>
       </form>
-      <p className="mt-3">No account? <Link to="/register" className="text-blue-600">Register here</Link></p>
     </div>
   );
 }
